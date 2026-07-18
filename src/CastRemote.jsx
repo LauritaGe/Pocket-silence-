@@ -20,10 +20,14 @@ function detectEnv() {
     window.matchMedia?.('(display-mode: standalone)')?.matches ||
     window.navigator.standalone === true
   const isAndroid = /Android/i.test(ua)
+  // iPadOS reciente se hace pasar por Mac, pero tiene touch.
+  const isIOS =
+    /iPhone|iPad|iPod/i.test(ua) ||
+    (/Macintosh/i.test(ua) && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1)
   const isChrome = /Chrome\//i.test(ua) && !/Edg\/|OPR\/|SamsungBrowser/i.test(ua)
   // Navegadores embebidos (Instagram, Facebook, etc.) no traen Cast.
   const inApp = /(FBAN|FBAV|Instagram|Line|WhatsApp|WebView|; wv\))/i.test(ua)
-  return { standalone, isAndroid, isChrome, inApp }
+  return { standalone, isAndroid, isIOS, isChrome, inApp }
 }
 
 export function CastRemote() {
@@ -35,6 +39,14 @@ export function CastRemote() {
   const env = detectEnv()
 
   useEffect(() => {
+    // iOS no expone el SDK de Google Cast a la web (WebKit). No tiene solución
+    // por navegador: se controla la TV con las apps nativas Google Home / Google TV.
+    if (env.isIOS) {
+      setReason('iOS')
+      setStatus('unavailable')
+      return
+    }
+
     window.__onGCastApiAvailable = (isAvailable) => {
       if (isAvailable) initCast()
       else fail('El navegador reportó Cast como no disponible (__onGCastApiAvailable=false).')
@@ -158,19 +170,39 @@ export function CastRemote() {
 
       {status === 'unavailable' ? (
         <div className="mono__controls">
-          <p className="mono__notice">
-            Cast no disponible acá. Abrí <strong>https://pocketsilence.netlify.app/?view=cast</strong> en
-            la <strong>app de Chrome</strong> de Android (no en la app instalada ni dentro de otra app),
-            misma WiFi que tu TV con Chromecast / Google TV.
-          </p>
-          {reason && <p className="mono__reason">Motivo: {reason}</p>}
-          <button
-            type="button"
-            className="mono__change"
-            onClick={() => window.location.reload()}
-          >
-            Reintentar
-          </button>
+          {reason === 'iOS' ? (
+            <>
+              <p className="mono__notice">
+                En <strong>iPhone / iPad</strong> el navegador no permite Cast (limitación de Apple, no
+                de la app). Para mutear tu Android TV / Chromecast desde iOS usá una app nativa gratis,
+                en la misma WiFi que la TV:
+              </p>
+              <p className="mono__notice">
+                • <strong>Google Home</strong> → tocá tu TV → volumen / silenciar.
+                <br />• <strong>Google TV</strong> → control remoto virtual con botón de mute.
+              </p>
+              <a
+                className="mono__connect"
+                href="https://apps.apple.com/app/google-home/id680819774"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir Google Home en App Store
+              </a>
+            </>
+          ) : (
+            <>
+              <p className="mono__notice">
+                Cast no disponible acá. Abrí <strong>https://pocketsilence.netlify.app/?view=cast</strong>{' '}
+                en la <strong>app de Chrome</strong> de Android (no en la app instalada ni dentro de otra
+                app), misma WiFi que tu TV con Chromecast / Google TV.
+              </p>
+              {reason && <p className="mono__reason">Motivo: {reason}</p>}
+              <button type="button" className="mono__change" onClick={() => window.location.reload()}>
+                Reintentar
+              </button>
+            </>
+          )}
         </div>
       ) : connected ? (
         <div className="mono__controls">
