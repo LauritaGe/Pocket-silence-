@@ -6,15 +6,19 @@ const DEFAULT_RECEIVER = 'CC1AD845'
 const SDK_SRC = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1'
 
 /**
- * Control real vía Google Cast: desde Chrome de Android, en la misma WiFi que
- * la TV, vincula una sesión de Cast y mutea el volumen del dispositivo.
- * Solo funciona con TVs Android TV / Chromecast integrado y navegadores con
- * soporte de Cast. No hace jamming ni interferencia: usa la API oficial.
+ * Control real vía Google Cast: desde Chrome (Android/desktop), en la misma WiFi
+ * que la TV, vincula una sesion de Cast y controla volumen/mute del dispositivo.
+ *
+ * Cast descubre los dispositivos por si mismo (mDNS/DIAL): funciona con CUALQUIER
+ * TV que tenga Chromecast integrado / Google TV, sin importar la marca. No hay
+ * base de codigos por marca (eso es del mundo IR). Usa la API oficial: no es
+ * jamming ni interferencia.
  */
 export function CastRemote() {
   const [status, setStatus] = useState('loading') // loading | unavailable | ready | connecting | connected
   const [device, setDevice] = useState('')
   const [muted, setMuted] = useState(false)
+  const [volume, setVolume] = useState(0.5)
 
   useEffect(() => {
     window.__onGCastApiAvailable = (isAvailable) => {
@@ -38,6 +42,18 @@ export function CastRemote() {
     return () => window.clearTimeout(timeout)
   }, [])
 
+  function syncFromSession(session) {
+    if (!session) return
+    setDevice(session.getCastDevice?.()?.friendlyName || 'TV')
+    try {
+      setMuted(Boolean(session.isMute?.()))
+      const v = session.getVolume?.()
+      if (typeof v === 'number' && v >= 0) setVolume(v)
+    } catch {
+      /* algunos receptores no exponen volumen */
+    }
+  }
+
   function initCast() {
     const { cast, chrome } = window
     if (!cast?.framework || !chrome?.cast) {
@@ -51,14 +67,12 @@ export function CastRemote() {
     })
 
     context.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, (event) => {
-      const s = event.sessionState
-      const session = context.getCurrentSession()
       const S = cast.framework.SessionState
-      if (s === S.SESSION_STARTED || s === S.SESSION_RESUMED) {
-        setDevice(session?.getCastDevice?.()?.friendlyName || 'TV')
-        setMuted(Boolean(session?.isMute?.()))
+      const session = context.getCurrentSession()
+      if (event.sessionState === S.SESSION_STARTED || event.sessionState === S.SESSION_RESUMED) {
+        syncFromSession(session)
         setStatus('connected')
-      } else if (s === S.SESSION_ENDED) {
+      } else if (event.sessionState === S.SESSION_ENDED) {
         setDevice('')
         setStatus('ready')
       }
@@ -67,18 +81,21 @@ export function CastRemote() {
     setStatus('ready')
   }
 
+  function currentSession() {
+    return window.cast?.framework?.CastContext?.getInstance()?.getCurrentSession() || null
+  }
+
   function connect() {
     const { cast } = window
     if (!cast?.framework) return
     setStatus('connecting')
     cast.framework.CastContext.getInstance()
       .requestSession()
-      .catch(() => setStatus('ready'))
+      .catch(() => setStatus((p) => (p === 'connecting' ? 'ready' : p)))
   }
 
   function toggleMute() {
-    const { cast } = window
-    const session = cast?.framework?.CastContext?.getInstance()?.getCurrentSession()
+    const session = currentSession()
     if (!session) {
       connect()
       return
@@ -86,9 +103,19 @@ export function CastRemote() {
     const next = !muted
     setMuted(next)
     try {
-      session.setMute(next).catch(() => {})
+      session.setMute(next)?.catch?.(() => {})
     } catch {
-      /* algunos receptores no exponen setMute */
+      /* receptor sin soporte de mute */
+    }
+  }
+
+  function changeVolume(value) {
+    setVolume(value)
+    const session = currentSession()
+    try {
+      session?.setVolume(value)?.catch?.(() => {})
+    } catch {
+      /* receptor sin soporte de volumen */
     }
   }
 
@@ -100,19 +127,36 @@ export function CastRemote() {
 
       {status === 'unavailable' ? (
         <p className="mono__notice">
-          Cast no disponible en este navegador. Abrí esta página en <strong>Chrome de Android</strong>,
-          en la misma WiFi que tu Android TV / Chromecast.
+          Cast no disponible en este navegador. Abrí esta página en <strong>Chrome de Android</strong>{' '}
+          (o Chrome de escritorio), en la misma WiFi que tu TV con Chromecast / Google TV.
         </p>
       ) : connected ? (
-        <button
-          type="button"
-          className={`mono__cta ${muted ? 'is-muted' : 'is-audible'}`}
-          onClick={toggleMute}
-          aria-pressed={muted}
-          aria-label={muted ? 'Restaurar volumen de la TV' : 'Silenciar la TV'}
-        >
-          {muted ? <SpeakerOff /> : <SpeakerOn />}
-        </button>
+        <div className="mono__controls">
+          <button
+            type="button"
+            className={`mono__cta ${muted ? 'is-muted' : 'is-audible'}`}
+            onClick={toggleMute}
+            aria-pressed={muted}
+            aria-label={muted ? 'Restaurar volumen de la TV' : 'Silenciar la TV'}
+          >
+            {muted ? <SpeakerOff /> : <SpeakerOn />}
+          </button>
+
+          <input
+            className="mono__vol"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={volume}
+            onChange={(e) => changeVolume(Number(e.target.value))}
+            aria-label="Volumen de la TV"
+          />
+
+          <button type="button" className="mono__change" onClick={connect}>
+            Cambiar TV
+          </button>
+        </div>
       ) : (
         <button
           type="button"
@@ -128,10 +172,14 @@ export function CastRemote() {
         </button>
       )}
 
-      <footer className="mono__foot">
-        <span className={`mono__dot ${connected ? 'is-on' : ''}`} aria-hidden="true" />
-        <span>
+      <footer className="mono__foot mono__foot--stack">
+        <span className="mono__status">
+          <span className={`mono__dot ${connected ? 'is-on' : ''}`} aria-hidden="true" />
           {connected ? `TV: ${device}` : status === 'unavailable' ? 'sin Cast' : 'sin vincular'}
+        </span>
+        <span className="mono__compat">
+          Compatible con cualquier TV con Chromecast integrado / Google TV (BGH, ONN, Hitachi, TCL,
+          Sony, Philips, Xiaomi…). Roku, Samsung Tizen y LG webOS no usan Cast.
         </span>
       </footer>
     </main>
