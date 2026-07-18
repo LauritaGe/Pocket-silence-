@@ -118,6 +118,37 @@
   color: rgba(244, 250, 245, 0.55);
 }
 
+.mono__connect {
+  padding: 1.05rem 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 163, 122, 0.5);
+  background: rgba(31, 163, 122, 0.1);
+  color: #f4faf5;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.mono__connect:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: rgba(31, 163, 122, 0.2);
+}
+
+.mono__connect:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.mono__notice {
+  margin: 0;
+  max-width: 26rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: rgba(244, 250, 245, 0.6);
+}
+
 /* ---------- TV simulada ---------- */
 .tv {
   position: fixed;

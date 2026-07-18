@@ -35,6 +35,16 @@ Luego:
 
 Ambas pantallas comparten una "sala" (`?room=demo` por defecto; podés usar `?room=loquesea` en las dos URLs para separar sesiones).
 
+## Modo Cast (control real de una Android TV / Chromecast)
+
+Además de la demo simulada, hay un modo que usa la **API oficial de Google Cast** para mutear el volumen de una Android TV / Chromecast propia:
+
+- Abrí `http://localhost:8080/?view=cast` (o el mismo path en el hosting) en **Chrome de Android**, en la misma WiFi que la TV.
+- Tocá "Vincular TV (Cast)" y elegí tu dispositivo. Esto inicia una sesión de Cast (la TV cambia a la pantalla de Cast).
+- El botón redondo mutea/restaura el volumen del dispositivo.
+
+Límites: solo Chrome con soporte de Cast (Android/desktop, no iOS/Safari); vincular interrumpe lo que se está viendo; el efecto depende del modelo (en muchas Android TV el volumen de Cast es el del sistema). Es **control remoto legal de un equipo propio** (la misma vía que usa la app oficial), no interferencia.
+
 ## Alcance del caso de estudio
 
-Este proyecto **no** interfiere señales ni controla equipos externos. Inhibir o jamear radios ajenas es ilegal y, además, imposible desde un navegador. La demo simula el concepto para poder mostrarlo y discutir su ética.
+Este proyecto **no** interfiere señales ni jamea. Inhibir radios ajenas es ilegal e imposible desde un navegador. La vista simulada muestra el concepto; el modo Cast controla únicamente un equipo propio y autorizado mediante su API oficial.
