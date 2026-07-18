@@ -2,35 +2,39 @@
 
 **El salvador de los oídos** — caso de estudio digital y lúdico.
 
-Simulación web inspirada en [Pocket Gone](https://pocketgone.com/): diagnóstico de dispositivos Bluetooth (nombre, MAC, RSSI, congestión de canales) y un **Modo S** jugable que silencia parlantes del escenario sonoro local.
+Demo web de dos pantallas: un **control** (pensado para el celular) y una **TV simulada**. Al tocar el botón del control, la TV simulada se **mutea en vivo**. Todo el efecto ocurre dentro de la app (audio y visuales del navegador).
 
 ## Qué es (y qué no es)
 
-- Es material educativo / de diseño, no un producto a la venta.
-- Corre entero en el navegador: síntesis de audio + UI.
-- **No** transmite RF, **no** jamea, **no** interfiere con Bluetooth real.
+- Material educativo / de diseño, no un producto a la venta.
+- Corre en el navegador: síntesis de audio + UI, sincronizadas por WebSocket.
+- **No** transmite RF, **no** jamea, **no** controla ni silencia ningún televisor ni dispositivo real. La "TV" es una simulación en pantalla.
 
 ## Cómo correrlo
+
+Desarrollo (solo una pantalla, sin sincronización):
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build de producción:
+Demo completa de dos pantallas (control + TV sincronizados):
 
 ```bash
+npm install
 npm run build
-npm run preview
+npm run serve   # sirve el build y el relay WebSocket en http://localhost:8080
 ```
 
-## Flujo de la simulación
+Luego:
 
-1. **Encender** el dispositivo.
-2. **Diagnóstico** — escanea dispositivos simulados en pair y grafica canales 2.4 GHz.
-3. **Modo S** — activa el campo sonoro de estudio; tocá un parlante Classic para silenciarlo / restaurarlo.
-4. Usá **Audio on/off** si preferís la demo en silencio.
+1. Abrí `http://localhost:8080/` en el **celular** → es el control.
+2. Abrí `http://localhost:8080/?view=tv` en la **notebook/TV** → es la TV simulada; tocá "Encender TV simulada".
+3. Tocá el botón redondo en el celular → la TV se mutea/restaura al instante.
 
-## Créditos
+Ambas pantallas comparten una "sala" (`?room=demo` por defecto; podés usar `?room=loquesea` en las dos URLs para separar sesiones).
 
-Inspirado en el taller y la documentación pública de Pocket Gone. Pocket Silence no está afiliado comercialmente; es un ejercicio de caso de estudio.
+## Alcance del caso de estudio
+
+Este proyecto **no** interfiere señales ni controla equipos externos. Inhibir o jamear radios ajenas es ilegal y, además, imposible desde un navegador. La demo simula el concepto para poder mostrarlo y discutir su ética.

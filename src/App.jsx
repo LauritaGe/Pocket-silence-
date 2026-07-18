@@ -1,40 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
-import { createStreetField } from './audio/streetField'
-import { MOCK_DEVICES } from './data/devices'
+import { useSync } from './useSync'
+import { TvScreen } from './TvScreen'
 import './App.css'
 
+function readParams() {
+  const p = new URLSearchParams(window.location.search)
+  return { room: p.get('room') || 'demo', isTv: p.get('view') === 'tv' }
+}
+
 export default function App() {
-  const fieldRef = useRef(null)
-  const [ready, setReady] = useState(false)
-  const [audible, setAudible] = useState(false)
+  const { room, isTv } = readParams()
+  const sync = useSync(room)
 
-  useEffect(() => {
-    fieldRef.current = createStreetField()
-  }, [])
+  return isTv ? <TvScreen sync={sync} room={room} /> : <Remote sync={sync} room={room} />
+}
 
-  async function handleToggle() {
-    const field = fieldRef.current
-    if (!field) return
-
-    if (!ready) {
-      try {
-        await field.start(MOCK_DEVICES)
-        field.setMuted(false)
-        setReady(true)
-        setAudible(true)
-      } catch {
-        setReady(true)
-        setAudible(false)
-      }
-      return
-    }
-
-    setAudible((on) => {
-      const next = !on
-      field.setMuted(!next)
-      return next
-    })
-  }
+function Remote({ sync, room }) {
+  const { muted, connected, setMuted } = sync
+  const tvUrl = `${window.location.origin}/?view=tv&room=${encodeURIComponent(room)}`
 
   return (
     <main className="mono">
@@ -42,13 +24,21 @@ export default function App() {
 
       <button
         type="button"
-        className={`mono__cta ${audible ? 'is-audible' : 'is-muted'}`}
-        onClick={handleToggle}
-        aria-pressed={!audible}
-        aria-label={audible ? 'Silenciar' : 'Reproducir'}
+        className={`mono__cta ${muted ? 'is-muted' : 'is-audible'}`}
+        onClick={() => setMuted(!muted)}
+        aria-pressed={muted}
+        aria-label={muted ? 'Restaurar audio de la TV' : 'Silenciar la TV'}
       >
-        {audible ? <SpeakerOn /> : <SpeakerOff />}
+        {muted ? <SpeakerOff /> : <SpeakerOn />}
       </button>
+
+      <footer className="mono__foot">
+        <span className={`mono__dot ${connected ? 'is-on' : ''}`} aria-hidden="true" />
+        <span>{connected ? 'control vinculado' : 'buscando pantalla…'}</span>
+        <a className="mono__link" href={tvUrl} target="_blank" rel="noreferrer">
+          Abrir pantalla TV
+        </a>
+      </footer>
     </main>
   )
 }
