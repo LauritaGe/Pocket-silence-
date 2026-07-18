@@ -152,6 +152,15 @@
   color: rgba(244, 250, 245, 0.6);
 }
 
+.mono__reason {
+  margin: 0;
+  max-width: 26rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(255, 180, 120, 0.75);
+}
+
 .mono__controls {
   display: flex;
   flex-direction: column;
