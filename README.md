@@ -35,6 +35,16 @@ Luego:
 
 Ambas pantallas comparten una "sala" (`?room=demo` por defecto; podés usar `?room=loquesea` en las dos URLs para separar sesiones).
 
+## Deploy como PWA en Netlify
+
+El repo ya trae `netlify.toml`. Para publicar:
+
+1. Conectá el repo en Netlify (o `netlify deploy`). Build command `npm run build`, publish `dist` (ya configurado).
+2. Netlify sirve el sitio por HTTPS, así que la **PWA es instalable** desde Chrome de Android ("Instalar app").
+3. El **modo Cast** (`/?view=cast`) funciona en Netlify sin nada extra: es cliente + API de Google Cast en la red local.
+
+Limitación: la **demo simulada de dos pantallas** usa un servidor WebSocket (`server/index.js`) y **Netlify no corre servidores persistentes**, así que ahí el sync celu↔TV no funciona (degrada a local). Para tener el sync simulado en producción hace falta un host con Node (por ej. Render/Railway/Fly) corriendo `npm run serve`, o migrar el sync a un servicio realtime (Ably/Pusher) o WebRTC.
+
 ## Modo Cast (control real de una Android TV / Chromecast)
 
 Además de la demo simulada, hay un modo que usa la **API oficial de Google Cast** para mutear el volumen de una Android TV / Chromecast propia:

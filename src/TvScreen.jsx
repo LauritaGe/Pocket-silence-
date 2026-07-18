@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { createStreetField } from './audio/streetField'
 import { MOCK_DEVICES } from './data/devices'
+import { useSync } from './useSync'
 
 const BARS = Array.from({ length: 28 }, (_, i) => i)
 
-export function TvScreen({ sync, room }) {
+export function TvScreen({ room }) {
   const fieldRef = useRef(null)
   const [on, setOn] = useState(false)
-  const { muted } = sync
+  const { muted } = useSync(room)
 
   useEffect(() => {
     fieldRef.current = createStreetField()

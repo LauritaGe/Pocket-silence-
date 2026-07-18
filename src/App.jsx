@@ -11,15 +11,14 @@ function readParams() {
 
 export default function App() {
   const { room, view } = readParams()
-  const sync = useSync(room)
 
   if (view === 'cast') return <CastRemote />
-  if (view === 'tv') return <TvScreen sync={sync} room={room} />
-  return <Remote sync={sync} room={room} />
+  if (view === 'tv') return <TvScreen room={room} />
+  return <Remote room={room} />
 }
 
-function Remote({ sync, room }) {
-  const { muted, connected, setMuted } = sync
+function Remote({ room }) {
+  const { muted, connected, setMuted } = useSync(room)
   const tvUrl = `${window.location.origin}/?view=tv&room=${encodeURIComponent(room)}`
 
   return (
