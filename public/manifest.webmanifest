@@ -1,0 +1,16 @@
+{
+  "name": "Pocket Silence — El salvador de los oídos",
+  "short_name": "Pocket Silence",
+  "description": "Caso de estudio digital y lúdico: control simulado y modo Cast para una TV propia.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
