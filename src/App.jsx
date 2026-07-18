@@ -14,7 +14,32 @@ export default function App() {
 
   if (view === 'cast') return <CastRemote />
   if (view === 'tv') return <TvScreen room={room} />
-  return <Remote room={room} />
+  if (view === 'sim') return <Remote room={room} />
+  return <Home />
+}
+
+function Home() {
+  return (
+    <main className="mono">
+      <h1 className="mono__title">El salvador de los oídos</h1>
+
+      <div className="mono__controls">
+        <a className="mono__connect" href="/?view=cast">
+          Vincular mi TV (Cast)
+        </a>
+        <a className="mono__change" href="/?view=sim">
+          Ver demo simulada
+        </a>
+      </div>
+
+      <footer className="mono__foot mono__foot--stack">
+        <span className="mono__compat">
+          Cast: control real de tu Android TV / Chromecast (Chrome de Android, misma WiFi). Demo:
+          simulación local en el navegador, sin equipos reales.
+        </span>
+      </footer>
+    </main>
+  )
 }
 
 function Remote({ room }) {
