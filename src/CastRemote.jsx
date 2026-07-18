@@ -14,16 +14,42 @@ const SDK_SRC = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCast
  * base de codigos por marca (eso es del mundo IR). Usa la API oficial: no es
  * jamming ni interferencia.
  */
+function detectEnv() {
+  const ua = navigator.userAgent || ''
+  const standalone =
+    window.matchMedia?.('(display-mode: standalone)')?.matches ||
+    window.navigator.standalone === true
+  const isAndroid = /Android/i.test(ua)
+  // iPadOS reciente se hace pasar por Mac, pero tiene touch.
+  const isIOS =
+    /iPhone|iPad|iPod/i.test(ua) ||
+    (/Macintosh/i.test(ua) && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1)
+  const isChrome = /Chrome\//i.test(ua) && !/Edg\/|OPR\/|SamsungBrowser/i.test(ua)
+  // Navegadores embebidos (Instagram, Facebook, etc.) no traen Cast.
+  const inApp = /(FBAN|FBAV|Instagram|Line|WhatsApp|WebView|; wv\))/i.test(ua)
+  return { standalone, isAndroid, isIOS, isChrome, inApp }
+}
+
 export function CastRemote() {
   const [status, setStatus] = useState('loading') // loading | unavailable | ready | connecting | connected
   const [device, setDevice] = useState('')
   const [muted, setMuted] = useState(false)
   const [volume, setVolume] = useState(0.5)
+  const [reason, setReason] = useState('')
+  const env = detectEnv()
 
   useEffect(() => {
+    // iOS no expone el SDK de Google Cast a la web (WebKit). No tiene solución
+    // por navegador: se controla la TV con las apps nativas Google Home / Google TV.
+    if (env.isIOS) {
+      setReason('iOS')
+      setStatus('unavailable')
+      return
+    }
+
     window.__onGCastApiAvailable = (isAvailable) => {
       if (isAvailable) initCast()
-      else setStatus('unavailable')
+      else fail('El navegador reportó Cast como no disponible (__onGCastApiAvailable=false).')
     }
 
     if (window.cast?.framework) {
@@ -32,15 +58,32 @@ export function CastRemote() {
       const s = document.createElement('script')
       s.id = 'cast-sdk'
       s.src = SDK_SRC
-      s.onerror = () => setStatus('unavailable')
+      s.onerror = () => fail('No se pudo cargar el SDK de Cast (gstatic.com bloqueado o sin red).')
       document.head.appendChild(s)
     }
 
     const timeout = window.setTimeout(() => {
-      setStatus((prev) => (prev === 'loading' ? 'unavailable' : prev))
+      setStatus((prev) => {
+        if (prev !== 'loading') return prev
+        setReason(
+          env.standalone
+            ? 'Estás en la app instalada (modo standalone): Chrome no inyecta Cast acá.'
+            : env.inApp
+              ? 'Estás en un navegador embebido de otra app: no trae Cast.'
+              : !env.isChrome
+                ? 'Este navegador no soporta Cast. Usá Chrome.'
+                : 'El SDK de Cast no respondió (5s). Probá recargar en Chrome.',
+        )
+        return 'unavailable'
+      })
     }, 5000)
     return () => window.clearTimeout(timeout)
   }, [])
+
+  function fail(msg) {
+    setReason(msg)
+    setStatus('unavailable')
+  }
 
   function syncFromSession(session) {
     if (!session) return
@@ -57,7 +100,7 @@ export function CastRemote() {
   function initCast() {
     const { cast, chrome } = window
     if (!cast?.framework || !chrome?.cast) {
-      setStatus('unavailable')
+      fail('El framework de Cast se cargó pero chrome.cast no está disponible.')
       return
     }
     const context = cast.framework.CastContext.getInstance()
@@ -126,10 +169,41 @@ export function CastRemote() {
       <h1 className="mono__title">El salvador de los oídos</h1>
 
       {status === 'unavailable' ? (
-        <p className="mono__notice">
-          Cast no disponible en este navegador. Abrí esta página en <strong>Chrome de Android</strong>{' '}
-          (o Chrome de escritorio), en la misma WiFi que tu TV con Chromecast / Google TV.
-        </p>
+        <div className="mono__controls">
+          {reason === 'iOS' ? (
+            <>
+              <p className="mono__notice">
+                En <strong>iPhone / iPad</strong> el navegador no permite Cast (limitación de Apple, no
+                de la app). Para mutear tu Android TV / Chromecast desde iOS usá una app nativa gratis,
+                en la misma WiFi que la TV:
+              </p>
+              <p className="mono__notice">
+                • <strong>Google Home</strong> → tocá tu TV → volumen / silenciar.
+                <br />• <strong>Google TV</strong> → control remoto virtual con botón de mute.
+              </p>
+              <a
+                className="mono__connect"
+                href="https://apps.apple.com/app/google-home/id680819774"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir Google Home en App Store
+              </a>
+            </>
+          ) : (
+            <>
+              <p className="mono__notice">
+                Cast no disponible acá. Abrí <strong>https://pocketsilence.netlify.app/?view=cast</strong>{' '}
+                en la <strong>app de Chrome</strong> de Android (no en la app instalada ni dentro de otra
+                app), misma WiFi que tu TV con Chromecast / Google TV.
+              </p>
+              {reason && <p className="mono__reason">Motivo: {reason}</p>}
+              <button type="button" className="mono__change" onClick={() => window.location.reload()}>
+                Reintentar
+              </button>
+            </>
+          )}
+        </div>
       ) : connected ? (
         <div className="mono__controls">
           <button
