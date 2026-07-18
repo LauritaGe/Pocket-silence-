@@ -9,6 +9,7 @@ import { createStreetField } from '../audio/streetField'
 
 export function usePocketSim() {
   const fieldRef = useRef(null)
+  const logSeq = useRef(0)
   const [powered, setPowered] = useState(false)
   const [mode, setMode] = useState('idle') // idle | diag | silence
   const [tick, setTick] = useState(0)
@@ -17,6 +18,7 @@ export function usePocketSim() {
   const [silencedIds, setSilencedIds] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [soundOn, setSoundOn] = useState(true)
+  const [jamming, setJamming] = useState(false)
   const [log, setLog] = useState([])
 
   useEffect(() => {
@@ -40,7 +42,9 @@ export function usePocketSim() {
   }, [silencedIds])
 
   const pushLog = (line) => {
-    setLog((prev) => [`${new Date().toLocaleTimeString('es-AR')}  ${line}`, ...prev].slice(0, 8))
+    logSeq.current += 1
+    const entry = { id: logSeq.current, text: `${new Date().toLocaleTimeString('es-AR')}  ${line}` }
+    setLog((prev) => [entry, ...prev].slice(0, 8))
   }
 
   const channels = useMemo(
@@ -75,6 +79,7 @@ export function usePocketSim() {
     setVisibleIds([])
     setSilencedIds([])
     setSelectedId(null)
+    setJamming(false)
     pushLog('Apagado')
   }
 
@@ -123,6 +128,26 @@ export function usePocketSim() {
       return next
     })
     setSelectedId(deviceId)
+    setJamming(false)
+  }
+
+  // Jammer digital de estudio: silencia de golpe TODOS los parlantes Classic
+  // del escenario simulado. Es puramente Web Audio local: no transmite RF, no
+  // desconecta ni interfiere con ningun dispositivo Bluetooth real del entorno.
+  async function toggleJammer() {
+    if (!powered) return
+    const targets = MOCK_DEVICES.filter((d) => d.classic && d.type === 'speaker').map((d) => d.id)
+    if (mode !== 'silence') await enterSilence()
+    setJamming((on) => {
+      const next = !on
+      setSilencedIds(next ? targets : [])
+      pushLog(
+        next
+          ? 'JAMMER SIM ON — parlantes Classic silenciados (solo simulacion, no afecta radios reales)'
+          : 'JAMMER SIM OFF — campo sonoro restaurado',
+      )
+      return next
+    })
   }
 
   return {
@@ -136,12 +161,14 @@ export function usePocketSim() {
     silencedIds,
     soundOn,
     setSoundOn,
+    jamming,
     log,
     powerOn,
     powerOff,
     enterDiag,
     enterSilence,
     toggleSilence,
+    toggleJammer,
   }
 }
 

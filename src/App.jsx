@@ -63,10 +63,11 @@ export default function App() {
               </p>
             </article>
             <article>
-              <h3>Modo S (simulado)</h3>
+              <h3>Modo S y Jammer (simulados)</h3>
               <p>
-                En lugar de actuar sobre el aire, genera un campo sonoro local y “silencia”
-                parlantes Classic del escenario. Ventana educativa, no interferencia.
+                En lugar de actuar sobre el aire, genera un campo sonoro local: “silenciás” un
+                parlante Classic o activás el <strong>Jammer sim</strong> para callarlos a todos.
+                Ventana educativa, no interferencia.
               </p>
             </article>
             <article>
@@ -77,6 +78,35 @@ export default function App() {
               </p>
             </article>
           </div>
+        </section>
+
+        <section className="ethics" id="etica">
+          <h2>Ética del “jammer” (y por qué acá es solo simulación)</h2>
+          <p>
+            El botón <strong>Jammer sim</strong> deja “sentir” la fantasía del interruptor mágico
+            que apaga el ruido ajeno, pero corta únicamente el audio sintetizado en tu navegador.
+            Un jammer real es otra cosa — y por buenas razones no lo construimos:
+          </p>
+          <ul className="ethics__list">
+            <li>
+              <strong>Es ilegal.</strong> Transmitir para inhibir o interferir radios ajenas está
+              prohibido en casi todo el mundo (multas y decomiso del equipo).
+            </li>
+            <li>
+              <strong>No distingue víctimas.</strong> Un jammer afecta a todos en su radio, no solo
+              al parlante molesto: puede tumbar auriculares médicos, alarmas o comunicaciones de
+              emergencia.
+            </li>
+            <li>
+              <strong>Técnicamente imposible desde la web.</strong> Un navegador no transmite RF ni
+              puede desconectar dispositivos de terceros; solo hablaría por GATT con un equipo
+              <em> propio</em> que vos autorizás.
+            </li>
+            <li>
+              <strong>Alternativas legítimas.</strong> Hablar con quien hace ruido, normas de
+              convivencia, o controlar tus propios dispositivos emparejados.
+            </li>
+          </ul>
         </section>
 
         <section className="disclaimer">

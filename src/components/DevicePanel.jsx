@@ -9,12 +9,14 @@ export function DevicePanel({ sim }) {
     setSelectedId,
     soundOn,
     setSoundOn,
+    jamming,
     log,
     powerOn,
     powerOff,
     enterDiag,
     enterSilence,
     toggleSilence,
+    toggleJammer,
   } = sim
 
   return (
@@ -42,9 +44,24 @@ export function DevicePanel({ sim }) {
               <>
                 <div className="screen-meta">
                   <span>2.4 GHz</span>
-                  <span>{mode === 'diag' ? 'DIAG' : mode === 'silence' ? 'MODO S' : 'STANDBY'}</span>
+                  <span>
+                    {jamming
+                      ? 'JAMMER SIM'
+                      : mode === 'diag'
+                        ? 'DIAG'
+                        : mode === 'silence'
+                          ? 'MODO S'
+                          : 'STANDBY'}
+                  </span>
                   <span>{scanning ? 'SCAN…' : 'OK'}</span>
                 </div>
+
+                {jamming && (
+                  <p className="jam-banner" role="status">
+                    Jammer simulado activo — corta el audio de todos los parlantes Classic del
+                    escenario. No transmite ni afecta dispositivos Bluetooth reales.
+                  </p>
+                )}
 
                 <div className="channel-row" aria-label="Congestión de canales Bluetooth">
                   {channels.map((ch) => (
@@ -89,8 +106,8 @@ export function DevicePanel({ sim }) {
                 </ul>
 
                 <div className="log" aria-live="polite">
-                  {log.map((line) => (
-                    <p key={line}>{line}</p>
+                  {log.map((entry) => (
+                    <p key={entry.id}>{entry.text}</p>
                   ))}
                 </div>
               </>
@@ -120,6 +137,16 @@ export function DevicePanel({ sim }) {
               disabled={!powered}
             >
               Modo S
+            </button>
+            <button
+              type="button"
+              className={`ctrl ctrl--jam ${jamming ? 'is-active' : ''}`}
+              onClick={toggleJammer}
+              disabled={!powered}
+              aria-pressed={jamming}
+              title="Jammer digital simulado — silencia todos los parlantes Classic del escenario. Solo simulación."
+            >
+              Jammer sim
             </button>
             <button
               type="button"
