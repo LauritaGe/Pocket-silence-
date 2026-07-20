@@ -166,7 +166,7 @@ export function CastRemote() {
 
   return (
     <main className="mono">
-      <h1 className="mono__title">El salvador de los oídos</h1>
+      <h1 className="mono__title">Pocket silence</h1>
 
       {status === 'unavailable' ? (
         <div className="mono__controls">
@@ -242,7 +242,7 @@ export function CastRemote() {
             ? 'Buscando TV…'
             : status === 'loading'
               ? 'Cargando Cast…'
-              : 'Vincular TV (Cast)'}
+              : 'Vincular TV'}
         </button>
       )}
 
