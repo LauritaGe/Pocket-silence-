@@ -166,7 +166,7 @@ export function CastRemote() {
 
   return (
     <main className="mono">
-      <h1 className="mono__title">Enjoy the silence TV</h1>
+      <h1 className="mono__title">Pocket silence</h1>
 
       {status === 'unavailable' ? (
         <div className="mono__controls">
